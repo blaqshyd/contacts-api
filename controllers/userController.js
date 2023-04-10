@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
+const jwt = require("jsonwebtoken");
 const { constants } = require("../constants");
 
 //@desc Register user
@@ -11,7 +12,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email || !password) {
     res.status(constants.VALIDATION_ERROR);
-    throw new Error("All fields are mandatory");
+    throw new Error("Fields are required!!!");
   }
   const userExists = await User.findOne({ email });
   if (userExists) {
@@ -34,7 +35,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(constants.VALIDATION_ERROR);
-    rs;
+
     throw new Error("User data not valid");
   }
 });
@@ -44,8 +45,31 @@ const registerUser = asyncHandler(async (req, res) => {
 //@access public
 
 const loginUser = asyncHandler(async (req, res) => {
-  const user = await User.find();
-  res.status(200).json(user);
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(constants.VALIDATION_ERROR);
+    throw new Error("Fields are required!!!");
+  }
+  const user = await User.findOne({ email });
+  //compare password with hasedpassword
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const accessToken = jwt.sign(
+      {
+        user: {
+          username: user.username,
+          email: user.email,
+          password: user.password,
+          id: user.id,
+        },
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+    res.status(constants.SUCESS).json({ accessToken });
+  } else {
+    res.status(constants.UNAUTHORIZED);
+    throw new Error("Email or password is not valid");
+  }
 });
 
 //@desc current user
@@ -53,8 +77,7 @@ const loginUser = asyncHandler(async (req, res) => {
 //@access private
 
 const currentUserInfo = asyncHandler(async (req, res) => {
-  const user = await User.find();
-  res.status(200).json(user);
+  res.json(req.user);
 });
 
 module.exports = { registerUser, loginUser, currentUserInfo };
