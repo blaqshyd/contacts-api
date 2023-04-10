@@ -82,7 +82,7 @@ const deleteContact = asyncHandler(async (req, res) => {
     res.status(constants.FORBIDDEN);
     throw new Error("Permission declined!!!");
   }
-  await Contact.remove();
+  await Contact.deleteOne({ _id: req.params.id });
   res.status(constants.SUCESS).json(contact);
 });
 
