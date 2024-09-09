@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const appRouter = express.Router();
 const {
   getContacts,
   getContact,
@@ -8,10 +8,14 @@ const {
   deleteContact,
 } = require("../controllers/contactController");
 const validateToken = require("../middleware/validateTokenHandler");
-router.use(validateToken);
+appRouter.use(validateToken);
 
-router.route("/").get(getContacts).post(createContact);
+appRouter.route("/").get(getContacts).post(createContact);
 
-router.route("/:id").get(getContact).delete(deleteContact).put(updateContact);
+appRouter
+  .route("/:id")
+  .get(getContact)
+  .delete(deleteContact)
+  .put(updateContact);
 
-module.exports = router;
+module.exports = appRouter;
