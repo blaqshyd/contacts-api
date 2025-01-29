@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const contactSchema = mongoose.Schema(
+const contactSchema = Schema(
   {
     user_id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       required: true,
       ref: "User",
     },
@@ -25,4 +25,4 @@ const contactSchema = mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Contact", contactSchema);
+export default model("Contact", contactSchema);

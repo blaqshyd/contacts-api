@@ -1,4 +1,4 @@
-exports.constants = {
+export const constants = {
   SUCESS: 200,
   CREATED: 201,
   NO_CONTENT: 204,
