@@ -1,23 +1,26 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const contactSchema = Schema(
+const { Schema, model } = mongoose;
+
+const contactSchema = new Schema(
   {
-    user_id: {
+    userId: {
       type: Schema.Types.ObjectId,
-      required: true,
       ref: "User",
+      required: true,
     },
     name: {
       type: String,
-      required: [true, "Please add the contact name"],
+      required: [true, "Enter contact name"],
     },
     email: {
       type: String,
-      required: [true, "Please add the contact email"],
+      required: [true, "Enter contact email"],
+      match: [/.+\@.+\..+/, "Please fill a valid email address"],
     },
-    phoneNumber: {
+    phone: {
       type: String,
-      required: [true, "Please add the contact phone number"],
+      required: [true, "Enter contact phone number"],
     },
   },
   {

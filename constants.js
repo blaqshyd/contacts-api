@@ -1,4 +1,4 @@
-export const constants = {
+export const statusCode = {
   SUCESS: 200,
   CREATED: 201,
   NO_CONTENT: 204,
@@ -7,4 +7,9 @@ export const constants = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   SERVER_ERROR: 500,
+};
+
+export const constants = {
+  BEARER_PREFIX: "Bearer ",
+  BEARER_LENGTH: "Bearer ".length,
 };

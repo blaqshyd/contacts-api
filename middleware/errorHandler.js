@@ -1,37 +1,42 @@
-import { constants } from "../constants.js";
+import { statusCode } from "../constants.js";
+
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode ? res.statusCode : 500;
-  switch (statusCode) {
-    case constants.VALIDATION_ERROR:
+  const code = res.statusCode ? res.statusCode : 500;
+  switch (code) {
+    case statusCode.VALIDATION_ERROR:
       res.json({
-        title: "Auth Failed",
+        code: res.statusCode,
         message: err.message,
         stackTrace: err.stackTrace,
       });
 
-    case constants.NOT_FOUND:
+    case statusCode.NOT_FOUND:
       res.json({
-        title: "Not Found",
+        code: res.statusCode,
+
         message: err.message,
         stackTrace: err.stackTrace,
       });
 
-    case constants.UNAUTHORIZED:
+    case statusCode.UNAUTHORIZED:
       res.json({
-        title: "Unauthorized",
+        code: res.statusCode,
+
         message: err.message,
         stackTrace: err.stackTrace,
       });
 
-    case constants.FORBIDDEN:
+    case statusCode.FORBIDDEN:
       res.json({
-        title: "Forbidden",
+        code: res.statusCode,
+
         message: err.message,
         stackTrace: err.stackTrace,
       });
-    case constants.SERVER_ERROR:
+    case statusCode.SERVER_ERROR:
       res.json({
-        title: "Server Error",
+        code: res.statusCode,
+
         message: err.message,
         stackTrace: err.stackTrace,
       });
