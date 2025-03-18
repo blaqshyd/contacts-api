@@ -1,8 +1,9 @@
 import asyncHandler from "express-async-handler";
-import { constants } from "../constants.js";
+import { statusCode } from "../constants.js";
 import Contact from "../models/contactModel.js";
+
 //@desc Get all contact
-//@route GET /api/contacts
+//@route GET /v1/contacts
 //@access private
 
 export const getContacts = asyncHandler(async (req, res) => {
@@ -11,27 +12,27 @@ export const getContacts = asyncHandler(async (req, res) => {
 });
 
 //@desc Get contact
-//@route GET /api/contacts/:id
+//@route GET /v1/contacts/:id
 //@access private
 
 export const getContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
-    res.status(constants.NOT_FOUND);
+    res.status(statusCode.NOT_FOUND);
     throw new Error("Contact not found");
   }
   res.status(200).json(contact);
 });
 
 //@desc Create new contact
-//@route POST /api/contacts
+//@route POST /v1/contacts
 //@access private
 
 export const createContact = asyncHandler(async (req, res) => {
   // console.log('The request body is :', req.body)
   const { name, email, phoneNumber } = req.body;
   if (!name || !email || !phoneNumber) {
-    res.status(constants.VALIDATION_ERROR);
+    res.status(statusCode.VALIDATION_ERROR);
     throw new Error("No field, all fields are mandatory");
   }
   const contact = await Contact.create({
@@ -41,21 +42,21 @@ export const createContact = asyncHandler(async (req, res) => {
     user_id: req.user_id,
   });
   console.log("Created succesfully");
-  res.status(201).json(contact);
+  res.status(statusCode.CREATED).json(contact);
 });
 
 //@desc Update contact
-//@route PUT /api/contacts/:id
+//@route PUT /v1/contacts/:id
 //@access private
 
 export const updateContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
-    res.status(constants.NOT_FOUND);
+    res.status(statusCode.NOT_FOUND);
     throw new Error("Contact not found");
   }
   if (contact.user_id.toString() !== req.user_id) {
-    res.status(constants.FORBIDDEN);
+    res.status(statusCode.FORBIDDEN);
     throw new Error("Permission declined!!!");
   }
 
@@ -68,20 +69,20 @@ export const updateContact = asyncHandler(async (req, res) => {
 });
 
 //@desc Delete contact
-//@route DELETE /api/contacts
+//@route DELETE /v1/contacts
 //@access private
 
 export const deleteContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
-    res.status(constants.NOT_FOUND);
+    res.status(statusCode.NOT_FOUND);
     throw new Error("Contact not found");
   }
 
   if (contact.user_id.toString() !== req.user_id) {
-    res.status(constants.FORBIDDEN);
+    res.status(statusCode.FORBIDDEN);
     throw new Error("Permission declined!!!");
   }
   await Contact.deleteOne({ _id: req.params.id });
-  res.status(constants.SUCESS).json(contact);
+  res.status(statusCode.SUCESS).json(contact);
 });
