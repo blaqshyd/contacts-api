@@ -6,22 +6,23 @@ const errorHandler = (err, req, res, next) => {
     case statusCode.VALIDATION_ERROR:
       res.json({
         code: res.statusCode,
+        success: false,
         message: err.message,
         stackTrace: err.stackTrace,
       });
-
+      break;
     case statusCode.NOT_FOUND:
       res.json({
         code: res.statusCode,
-
+        success: false,
         message: err.message,
         stackTrace: err.stackTrace,
       });
-
+      break;
     case statusCode.UNAUTHORIZED:
       res.json({
         code: res.statusCode,
-
+        success: false,
         message: err.message,
         stackTrace: err.stackTrace,
       });
@@ -29,19 +30,26 @@ const errorHandler = (err, req, res, next) => {
     case statusCode.FORBIDDEN:
       res.json({
         code: res.statusCode,
-
+        success: false,
         message: err.message,
         stackTrace: err.stackTrace,
       });
     case statusCode.SERVER_ERROR:
       res.json({
         code: res.statusCode,
-
+        success: false,
         message: err.message,
         stackTrace: err.stackTrace,
       });
     default:
-      console.log("No error, all good.");
+      console.log(err.message);
+      console.log(err.stackTracee);
+      res.json({
+        code: res.statusCode,
+        success: false,
+        message: err.message,
+        stackTrace: err.stackTrace,
+      });
       break;
   }
 };

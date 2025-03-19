@@ -1,6 +1,6 @@
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { statusCode, constants } from "../constants.js";
+import { constants, statusCode } from "../constants.js";
 import errorHandler from "../middleware/errorHandler.js";
 import User from "../models/userModel.js";
 import { blacklistToken } from "../utils/tokenBlacklist.js";
@@ -123,7 +123,7 @@ export const loginUser = async (req, res) => {
       updatedAt: user.updatedAt,
     };
 
-    res.status(statusCode.SUCESS).json({
+    res.status(statusCode.OK).json({
       code: res.statusCode,
       success: true,
       accessToken,

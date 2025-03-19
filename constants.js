@@ -1,5 +1,5 @@
 export const statusCode = {
-  SUCESS: 200,
+  OK: 200,
   CREATED: 201,
   NO_CONTENT: 204,
   VALIDATION_ERROR: 400,
