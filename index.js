@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import express, { json } from "express";
+import express from "express";
 import http from "http";
 import morgan from "morgan";
 import connectDb from "./config/dbConnection.js";
@@ -27,8 +27,10 @@ app.use(
     ].join(" ");
   })
 );
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
-app.use(json());
+app.use("/uploads", express.static("uploads"));
 
 app.get("/v1/", (req, res) => {
   try {

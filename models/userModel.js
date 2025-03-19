@@ -24,6 +24,40 @@ const userSchema = new Schema(
       required: [true, "Enter password"],
       minlength: [6, "Password must be at least 6 characters long"],
     },
+
+    avatar: {
+      type: String,
+      default: null,
+    },
+
+    preferences: {
+      theme: {
+        type: String,
+        enum: ["light", "dark"],
+        default: "light",
+      },
+      language: {
+        type: String,
+        default: "en",
+      },
+      // Add other preference fields as needed
+    },
+
+    notificationSettings: {
+      email: {
+        type: Boolean,
+        default: true,
+      },
+      push: {
+        type: Boolean,
+        default: true,
+      },
+      marketing: {
+        type: Boolean,
+        default: false,
+      },
+      // Add other notification settings as needed
+    },
   },
   {
     timestamps: true,
