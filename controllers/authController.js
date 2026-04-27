@@ -17,15 +17,19 @@ export const registerUser = async (req, res) => {
     const hashedPassword = await bcryptjs.hash(password, 8);
 
     if (!email || !password || !username) {
-      return res
-        .status(statusCode.UNAUTHORIZED)
-        .json({ message: "All fields are required" });
+      return res.status(statusCode.UNAUTHORIZED).json({
+        code: res.statusCode,
+        status: false,
+        message: "All fields are required",
+      });
     }
 
     if (emailExists) {
-      return res
-        .status(statusCode.UNAUTHORIZED)
-        .json({ message: "Email already exists!" });
+      return res.status(statusCode.UNAUTHORIZED).json({
+        code: res.statusCode,
+        status: false,
+        message: "Email already exists!",
+      });
     }
 
     if (userNameExists) {
@@ -43,10 +47,10 @@ export const registerUser = async (req, res) => {
     });
     user = await user.save();
 
-    const token = jwt.sign(
+    const verificationToken = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: process.env.JWT_EXPIRATION }
+      process.env.VERIFY_TOKEN_SECRET,
+      { expiresIn: "24h" } // Longer expiration for email verification
     );
 
     // Transform the user object to replace _id with userId
@@ -54,6 +58,7 @@ export const registerUser = async (req, res) => {
       userId: user._id,
       username: user.username,
       email: user.email,
+      isVerified: user.isVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -61,7 +66,7 @@ export const registerUser = async (req, res) => {
     res.status(statusCode.CREATED).json({
       code: res.statusCode,
       success: true,
-      token,
+      verificationToken,
       data: userResponse,
     });
   } catch (err) {
@@ -87,7 +92,7 @@ export const loginUser = async (req, res) => {
     if (!user) {
       return res.status(statusCode.UNAUTHORIZED).json({
         code: res.statusCode,
-        status: "false",
+        status: false,
         message: "User with this email does not exist",
       });
     }
@@ -97,7 +102,7 @@ export const loginUser = async (req, res) => {
     if (!correctPassword) {
       return res.status(statusCode.UNAUTHORIZED).json({
         code: res.statusCode,
-        status: "false",
+        status: false,
         message: "Incorrect password",
       });
     }
@@ -119,6 +124,7 @@ export const loginUser = async (req, res) => {
       userId: user._id,
       username: user.username,
       email: user.email,
+      isVerified: user.isVerified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -139,33 +145,60 @@ export const loginUser = async (req, res) => {
 
 export const verifyEmail = async (req, res) => {
   try {
-    const { email, token } = req.body;
-    if (!email || !token) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        message: "Email and token are required",
+    const { email } = req.body;
+    // Get decoded user from the tokenValidator middleware
+    const decodedUser = req.user;
+
+    if (!email) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        code: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Email is required",
       });
     }
 
-    // Logic to verify email using the token
-    // Example: const isVerified = await someVerificationFunction(email, token);
-
-    if (!isVerified) {
+    // Check if the email matches the token's email
+    if (decodedUser.email !== email) {
       return res.status(statusCode.UNAUTHORIZED).json({
-        code: res.statusCode,
-        status: "false",
-        message: "Invalid token or email",
+        code: statusCode.UNAUTHORIZED,
+        success: false,
+        message: "Email verification failed: Email does not match token",
       });
     }
 
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      status: "true",
-      message: "Email verified successfully.",
+    // Find and update the user
+    const user = await User.findById(decodedUser.id);
+    if (!user) {
+      return res.status(statusCode.NOT_FOUND).json({
+        code: statusCode.NOT_FOUND,
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        code: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Email already verified",
+      });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    return res.status(statusCode.OK).json({
+      code: statusCode.OK,
+      success: true,
+      message: "Email verified successfully",
     });
   } catch (err) {
-    console.error("Error in verifyEmail:", err.message);
-    console.error(err.stack);
-    errorHandler(err, req, res);
+    console.error("Error in verifyEmail:", err);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      code: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: "Error verifying email",
+    });
   }
 };
 

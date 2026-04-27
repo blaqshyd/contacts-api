@@ -1,8 +1,15 @@
 import { createClient } from "redis";
+import "./env.config.js";
 
 const createRedisClient = () => {
-  if (process.env.NODE_ENV === "production") {
+  const environment = process.env.NODE_ENV || "development";
+
+  if (environment === "production") {
     // Production configuration
+    console.log(
+      "🔴 Connecting to Production Redis at:",
+      process.env.REDIS_HOST,
+    );
     return createClient({
       username: process.env.REDIS_USERNAME,
       password: process.env.REDIS_PASSWORD,
@@ -13,6 +20,7 @@ const createRedisClient = () => {
     });
   } else {
     // Development configuration
+    console.log("🟢 Connecting to Development Redis at: localhost:6379");
     return createClient({
       url: "redis://localhost:6379",
     });
@@ -26,7 +34,7 @@ client.on("error", (err) => {
 });
 
 client.on("connect", () => {
-  console.log("Connected to Redis successfully");
+  console.log("Connected to Redis successfully 🚀");
 });
 
 // Connect to Redis

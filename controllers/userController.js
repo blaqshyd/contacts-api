@@ -8,13 +8,29 @@ import User from "../models/userModel.js";
 // @access Private
 export const currentUserInfo = async (req, res) => {
   try {
+    // Fetch complete user data from database using the ID from token
+    const user = await User.findById(req.user.userId).select("-password");
+    // console.log(req.user.userId);
+
+    console.log(user);
+
+    if (!user) {
+      return res.status(statusCode.NOT_FOUND).json({
+        code: statusCode.NOT_FOUND,
+        success: false,
+        message: "User not found",
+      });
+    }
+
     const userResponse = {
-      userId: req.user._id,
-      username: req.user.username,
-      email: req.user.email,
-      preferences: req.user.preferences,
-      createdAt: req.user.createdAt,
-      updatedAt: req.user.updatedAt,
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      avatar: user.avatar,
+      isVerified: user.isVerified,
+      preferences: user.preferences,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
 
     res.status(statusCode.OK).json({

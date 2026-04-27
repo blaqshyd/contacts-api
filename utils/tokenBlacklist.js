@@ -1,4 +1,4 @@
-import redisClient from "./redis_client.js";
+import redisClient from "../config/redis_client.js";
 
 export const blacklistToken = async (token, expiryTime) => {
   try {

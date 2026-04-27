@@ -8,6 +8,7 @@ import {
   resetPassword,
   verifyEmail,
 } from "../controllers/authController.js";
+import emailVerificationValidator from "../middleware/emailVerificationValidator.js";
 import tokenValidator from "../middleware/tokenValidator.js";
 import validateRefreshToken from "../middleware/validateRefreshToken.js";
 
@@ -16,7 +17,7 @@ const authRouter = Router();
 authRouter
   .post("/register", registerUser)
   .post("/login", loginUser)
-  .post("/verify-email", tokenValidator, verifyEmail)
+  .post("/verify-email", emailVerificationValidator, verifyEmail)
   .post("/forgot-password", tokenValidator, forgotPassword)
   .post("/reset-password", tokenValidator, resetPassword)
   .post("/logout", tokenValidator, logout)
