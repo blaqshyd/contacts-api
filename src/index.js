@@ -1,13 +1,8 @@
-import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
 import connectDb from "./config/dbConnection.js";
 import errorHandler from "./middleware/errorHandler.js";
-import authRouter from "./routes/authRoutes.js";
-import contactRoutes from "./routes/contactRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-
-dotenv.config();
+import mainRouter from "./routes/index.js";
 connectDb();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -24,35 +19,18 @@ app.use(
       tokens["response-time"](req, res),
       "ms",
     ].join(" ");
-  })
+  }),
 );
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use("/uploads", express.static("uploads"));
 
-app.get("/v1/", (req, res) => {
-  try {
-    res.json({
-      code: res.statusCode,
-      status: true,
-      message: "Welcome to the Contact API",
-      data: {
-        name: "Blaqshyd",
-        description: "A simple contact API",
-        version: "1.0.0",
-        author: "Blaqshyd",
-      },
-    });
-  } catch (error) {
-    errorHandler(error, req, res);
-  }
-});
-app.use("/v1/auth", authRouter);
-app.use("/v1/contact", contactRoutes);
-app.use("/v1/user", userRoutes);
+// API base path
+app.use("/v1", mainRouter);
 app.use(errorHandler);
 
+// Start the server
 app.listen(port, () => {
-  console.log(`Listening on port:: http://localhost:${port}/`);
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });
