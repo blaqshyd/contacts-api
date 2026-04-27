@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import express from "express";
-import http from "http";
 import morgan from "morgan";
 import connectDb from "./config/dbConnection.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -54,12 +53,6 @@ app.use("/v1/contact", contactRoutes);
 app.use("/v1/user", userRoutes);
 app.use(errorHandler);
 
-/** Create HTTP server. */
-const server = http.createServer(app);
-
-/** Listen on provided port, on all network interfaces. */
-server.listen(port);
-/** Event listener for HTTP server "listening" event. */
-server.on("listening", () => {
+app.listen(port, () => {
   console.log(`Listening on port:: http://localhost:${port}/`);
 });
