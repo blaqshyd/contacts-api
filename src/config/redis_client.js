@@ -25,12 +25,14 @@ const createRedisClient = () => {
       socket: {
         host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT),
+        connectTimeout: 10000,
       },
     });
   } else {
     console.log("🟢 Connecting to Development Redis at: localhost:6379");
     return createClient({
       url: "redis://localhost:6379",
+      connectTimeout: 5000,
     });
   }
 };
@@ -62,6 +64,18 @@ const connectWithRetry = async (client, maxRetries = 5, delay = 1000) => {
   throw new Error(`Failed to connect to Redis after ${maxRetries} retries`);
 };
 
+// const closeClient = async () => {
+//   if (client && isConnected) {
+//     try {
+//       await client.quit();
+//       isConnected = false;
+//       console.log("Redis client disconnected");
+//     } catch (err) {
+//       console.error("Error disconnecting Redis client:", err.message);
+//     }
+//   }
+// };
+//
 const closeClient = async () => {
   if (client && isConnected) {
     try {
@@ -70,6 +84,9 @@ const closeClient = async () => {
       console.log("Redis client disconnected");
     } catch (err) {
       console.error("Error disconnecting Redis client:", err.message);
+    } finally {
+      // Force exit if the client doesn't close
+      process.exit(0);
     }
   }
 };

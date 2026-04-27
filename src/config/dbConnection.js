@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import "./env.config.js";
 
 const connectDb = async () => {
-  const environment = process.env.NODE_ENV;
+  const environment = process.env.NODE_ENV || "development"; // Default to development
 
   try {
     if (environment === "production") {
@@ -10,9 +10,14 @@ const connectDb = async () => {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
-      console.log("MongoDB connected");
+      console.log("MongoDB connected (Production)");
     } else {
-      console.log("Running on localhost");
+      // Connect to a local MongoDB instance in development
+      await mongoose.connect("mongodb://localhost:27017/contacts-api", {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log("MongoDB connected (Development)");
     }
   } catch (error) {
     console.error("MongoDB connection error:", error);

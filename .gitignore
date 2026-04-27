@@ -3,3 +3,5 @@
 .env
 .vscode
 package-lock.json
+.vercel
+vercel.json
