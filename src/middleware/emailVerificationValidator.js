@@ -26,7 +26,7 @@ const emailVerificationValidator = async (req, res, next) => {
     }
 
     // Verify with email verification secret
-    const verified = jwt.verify(token, process.env.EMAIL_VERIFICATION_SECRET);
+    const verified = jwt.verify(token, process.env.VERIFY_TOKEN_SECRET);
     if (verified.exp && Date.now() >= verified.exp * 1000) {
       return res.status(statusCode.UNAUTHORIZED).json({
         code: statusCode.UNAUTHORIZED,

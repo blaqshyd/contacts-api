@@ -50,7 +50,7 @@ export const registerUser = async (req, res) => {
     const verificationToken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.VERIFY_TOKEN_SECRET,
-      { expiresIn: "24h" } // Longer expiration for email verification
+      { expiresIn: "24h" }, // Longer expiration for email verification
     );
 
     // Transform the user object to replace _id with userId
@@ -110,13 +110,13 @@ export const loginUser = async (req, res) => {
     const accessToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
 
     const refreshToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     // Transform the user object to replace _id with userId
@@ -307,7 +307,7 @@ export const refreshToken = async (req, res) => {
     const accessToken = jwt.sign(
       { id: user.id, email: user.email },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15m" } // Short lived
+      { expiresIn: "15m" }, // Short lived
     );
 
     res.json({
