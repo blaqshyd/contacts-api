@@ -1,63 +1,32 @@
-import { statusCode as sCode } from "../constants.js";
+import { errorResponse } from "../utils/responseHelper.js";
 
 const errorHandler = (err, req, res, next) => {
-  const code = res.statusCode ? res.statusCode : 500;
+  let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  let message = err.message || "Internal Server Error";
 
-  console.log(code);
-
-  switch (code) {
-    case sCode.VALIDATION_ERROR:
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-      break;
-    case sCode.NOT_FOUND:
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-      break;
-    case sCode.UNAUTHORIZED:
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-      break;
-    case sCode.FORBIDDEN:
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-      break;
-    case sCode.SERVER_ERROR:
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-      break;
-    default:
-      console.log(err.message);
-      console.log(res.statusCode);
-      res.json({
-        code: res.statusCode,
-        success: false,
-        message: err.message,
-        stackTrace: err.stackTrace,
-      });
-
-      break;
+  if (err.name === "CastError" && err.kind === "ObjectId") {
+    statusCode = 404;
+    message = "Resource not found";
   }
+
+  if (err.name === "ValidationError") {
+    statusCode = 400;
+    message = Object.values(err.errors)
+      .map((e) => e.message)
+      .join(", ");
+  }
+
+  if (err.code === 11000) {
+    statusCode = 409;
+    const field = Object.keys(err.keyPattern)[0];
+    message = `${field} already exists`;
+  }
+
+  if (process.env.NODE_ENV !== "production" && err.stack) {
+    console.error(`[ERROR] ${statusCode} - ${message}\n${err.stack}`);
+  }
+
+  errorResponse(res, statusCode, message);
 };
 
 export default errorHandler;
