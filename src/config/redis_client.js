@@ -136,10 +136,5 @@ const connectRedis = async () => {
   }
 };
 
-process.on("SIGTERM", closeClient);
-process.on("SIGINT", closeClient);
-
-connectRedis();
-
 export default client;
-export { ensureConnected, isConnected };
+export { closeClient, ensureConnected, isConnected };
