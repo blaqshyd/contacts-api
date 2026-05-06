@@ -23,7 +23,7 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Enter password"],
       minlength: [6, "Password must be at least 6 characters long"],
-    }, // console.log(req.user.userId);
+    },
 
     avatar: {
       type: String,

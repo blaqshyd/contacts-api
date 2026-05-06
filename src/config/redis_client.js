@@ -64,18 +64,6 @@ const connectWithRetry = async (client, maxRetries = 5, delay = 1000) => {
   throw new Error(`Failed to connect to Redis after ${maxRetries} retries`);
 };
 
-// const closeClient = async () => {
-//   if (client && isConnected) {
-//     try {
-//       await client.quit();
-//       isConnected = false;
-//       console.log("Redis client disconnected");
-//     } catch (err) {
-//       console.error("Error disconnecting Redis client:", err.message);
-//     }
-//   }
-// };
-//
 const closeClient = async () => {
   if (client && isConnected) {
     try {
