@@ -1,51 +1,32 @@
 import bcryptjs from "bcryptjs";
 import { statusCode } from "../constants.js";
-import errorHandler from "../middleware/errorHandler.js";
 import User from "../models/userModel.js";
+import Notification from "../models/notificationModel.js";
+import { successResponse, errorResponse } from "../utils/responseHelper.js";
 
-// @desc Get current user profile
-// @route GET /api/users/profile
-// @access Private
+const userResponseTransform = (user) => ({
+  userId: user._id,
+  username: user.username,
+  email: user.email,
+  avatar: user.avatar,
+  isVerified: user.isVerified,
+  preferences: user.preferences,
+  createdAt: user.createdAt,
+  updatedAt: user.updatedAt,
+});
+
 export const currentUserInfo = async (req, res) => {
   try {
-    // Fetch complete user data from database using the ID from token
     const user = await User.findById(req.user.userId).select("-password");
-    // console.log(req.user.userId);
-
-    console.log(user);
-
     if (!user) {
-      return res.status(statusCode.NOT_FOUND).json({
-        code: statusCode.NOT_FOUND,
-        success: false,
-        message: "User not found",
-      });
+      return errorResponse(res, statusCode.NOT_FOUND, "User not found");
     }
-
-    const userResponse = {
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-      avatar: user.avatar,
-      isVerified: user.isVerified,
-      preferences: user.preferences,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: userResponse,
-    });
+    return successResponse(res, statusCode.OK, "User profile retrieved", userResponseTransform(user));
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to retrieve profile", err.message);
   }
 };
 
-// @desc Update user profile
-// @route PUT /api/users/profile
-// @access Private
 export const updateProfile = async (req, res) => {
   try {
     const { email, username } = req.body;
@@ -54,9 +35,7 @@ export const updateProfile = async (req, res) => {
     if (email && email !== user.email) {
       const emailExists = await User.findOne({ email });
       if (emailExists) {
-        return res.status(statusCode.CONFLICT).json({
-          message: "Email already exists!",
-        });
+        return errorResponse(res, statusCode.CONFLICT, "Email already exists");
       }
       user.email = email;
     }
@@ -64,180 +43,108 @@ export const updateProfile = async (req, res) => {
     if (username && username !== user.username) {
       const usernameExists = await User.findOne({ username });
       if (usernameExists) {
-        return res.status(statusCode.CONFLICT).json({
-          message: "Username is taken!",
-        });
+        return errorResponse(res, statusCode.CONFLICT, "Username is taken");
       }
       user.username = username;
     }
 
     const updatedUser = await user.save();
-    const userResponse = {
+    return successResponse(res, statusCode.OK, "User updated successfully", {
       userId: updatedUser._id,
       username: updatedUser.username,
       email: updatedUser.email,
       updatedAt: updatedUser.updatedAt,
-    };
-
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: userResponse,
     });
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update user", err.message);
   }
 };
 
-// @desc Update password
-// @route PATCH /api/users/profile/password
-// @access Private
 export const updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = req.user;
 
     if (!currentPassword || !newPassword) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        message: "Current password and new password are required",
-      });
+      return errorResponse(res, statusCode.BAD_REQUEST, "Current password and new password are required");
     }
 
-    const correctPassword = await bcryptjs.compare(
-      currentPassword,
-      user.password
-    );
+    const user = req.user;
+    const correctPassword = await bcryptjs.compare(currentPassword, user.password);
     if (!correctPassword) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        message: "Current password is incorrect",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Current password is incorrect");
     }
 
-    user.password = await bcryptjs.hash(newPassword, 8);
+    user.password = await bcryptjs.hash(newPassword, 12);
     await user.save();
 
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      message: "Password updated successfully",
-    });
+    return successResponse(res, statusCode.OK, "Password updated successfully");
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update password", err.message);
   }
 };
 
-// @desc Delete user account
-// @route DELETE /api/users/profile
-// @access Private
 export const deleteAccount = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.user._id);
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      message: "Account deleted successfully",
-    });
+    await User.findByIdAndDelete(req.user.userId);
+    return successResponse(res, statusCode.OK, "Account deleted successfully", { id: req.user.userId });
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to delete user", err.message);
   }
 };
 
-// @desc Get user preferences
-// @route GET /api/users/profile/preferences
-// @access Private
 export const getUserPreferences = async (req, res) => {
   try {
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: req.user.preferences || {},
-    });
+    return successResponse(res, statusCode.OK, "Preferences retrieved", req.user.preferences || {});
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to retrieve preferences", err.message);
   }
 };
 
-// @desc Update user preferences
-// @route PUT /api/users/profile/preferences
-// @access Private
 export const updatePreferences = async (req, res) => {
   try {
     const user = req.user;
     user.preferences = { ...user.preferences, ...req.body };
     await user.save();
-
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: user.preferences,
-    });
+    return successResponse(res, statusCode.OK, "Preferences updated", user.preferences);
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update preferences", err.message);
   }
 };
 
-// @desc Upload avatar
-// @route POST /api/users/profile/avatar
-// @access Private
 export const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        message: "No file uploaded",
-      });
+      return errorResponse(res, statusCode.BAD_REQUEST, "No file uploaded");
     }
 
     const user = req.user;
-    user.avatar = req.file.path; // Assuming you're using multer or similar
+    user.avatar = req.file.path;
     await user.save();
 
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: { avatarUrl: user.avatar },
-    });
+    return successResponse(res, statusCode.OK, "Avatar uploaded successfully", { avatarUrl: user.avatar });
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to upload avatar", err.message);
   }
 };
 
-// @desc Get user notifications
-// @route GET /api/users/profile/notifications
-// @access Private
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user._id })
+    const notifications = await Notification.find({ user: req.user.userId })
       .sort({ createdAt: -1 })
       .limit(50);
-
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: notifications,
-    });
+    return successResponse(res, statusCode.OK, "Notifications retrieved", notifications);
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to retrieve notifications", err.message);
   }
 };
 
-// @desc Update notification settings
-// @route PUT /api/users/profile/notifications/settings
-// @access Private
 export const updateNotificationSettings = async (req, res) => {
   try {
     const user = req.user;
-    user.notificationSettings = {
-      ...user.notificationSettings,
-      ...req.body,
-    };
+    user.notificationSettings = { ...user.notificationSettings, ...req.body };
     await user.save();
-
-    res.status(statusCode.OK).json({
-      code: res.statusCode,
-      success: true,
-      data: user.notificationSettings,
-    });
+    return successResponse(res, statusCode.OK, "Notification settings updated", user.notificationSettings);
   } catch (err) {
-    errorHandler(err, req, res);
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update notification settings", err.message);
   }
 };

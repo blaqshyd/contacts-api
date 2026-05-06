@@ -1,88 +1,87 @@
-import asyncHandler from "express-async-handler";
 import { statusCode } from "../constants.js";
 import Contact from "../models/contactModel.js";
+import { successResponse, errorResponse } from "../utils/responseHelper.js";
 
-//@desc Get all contact
-//@route GET /v1/contacts
-//@access private
-
-export const getContacts = asyncHandler(async (req, res) => {
-  const contacts = await Contact.find({ user_id: req.user_id });
-  res.status(200).json(contacts);
-});
-
-//@desc Get contact
-//@route GET /v1/contacts/:id
-//@access private
-
-export const getContact = asyncHandler(async (req, res) => {
-  const contact = await Contact.findById(req.params.id);
-  if (!contact) {
-    res.status(statusCode.NOT_FOUND);
-    throw new Error("Contact not found");
+export const getContacts = async (req, res) => {
+  try {
+    const contacts = await Contact.find({ userId: req.user.userId });
+    return successResponse(res, statusCode.OK, "Contacts fetched successfully", contacts);
+  } catch (err) {
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to fetch contacts", err.message);
   }
-  res.status(200).json(contact);
-});
+};
 
-//@desc Create new contact
-//@route POST /v1/contacts
-//@access private
-
-export const createContact = asyncHandler(async (req, res) => {
-  // console.log('The request body is :', req.body)
-  const { name, email, phoneNumber } = req.body;
-  if (!name || !email || !phoneNumber) {
-    res.status(statusCode.VALIDATION_ERROR);
-    throw new Error("No field, all fields are mandatory");
+export const getContact = async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    if (contact.userId.toString() !== req.user.userId) {
+      return errorResponse(res, statusCode.FORBIDDEN, "Access denied");
+    }
+    return successResponse(res, statusCode.OK, "Contact fetched successfully", contact);
+  } catch (err) {
+    if (err.name === "CastError") {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to fetch contact", err.message);
   }
-  const contact = await Contact.create({
-    name,
-    email,
-    phoneNumber,
-    user_id: req.user_id,
-  });
-  console.log("Created succesfully");
-  res.status(statusCode.CREATED).json(contact);
-});
+};
 
-//@desc Update contact
-//@route PUT /v1/contacts/:id
-//@access private
-
-export const updateContact = asyncHandler(async (req, res) => {
-  const contact = await Contact.findById(req.params.id);
-  if (!contact) {
-    res.status(statusCode.NOT_FOUND);
-    throw new Error("Contact not found");
+export const createContact = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    if (!name || !email || !phone) {
+      return errorResponse(res, statusCode.BAD_REQUEST, "All fields are required");
+    }
+    const contact = await Contact.create({
+      name,
+      email,
+      phone,
+      userId: req.user.userId,
+    });
+    return successResponse(res, statusCode.CREATED, "Contact created successfully", contact);
+  } catch (err) {
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to create contact", err.message);
   }
-  if (contact.user_id.toString() !== req.user_id) {
-    res.status(statusCode.FORBIDDEN);
-    throw new Error("Permission declined!!!");
+};
+
+export const updateContact = async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    if (contact.userId.toString() !== req.user.userId) {
+      return errorResponse(res, statusCode.FORBIDDEN, "Access denied");
+    }
+
+    const updatedContact = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    return successResponse(res, statusCode.OK, "Contact updated successfully", updatedContact);
+  } catch (err) {
+    if (err.name === "CastError") {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update contact", err.message);
   }
+};
 
-  const updatedContact = await Contact.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true }
-  );
-  res.status(200).json(updatedContact);
-});
-
-//@desc Delete contact
-//@route DELETE /v1/contacts
-//@access private
-
-export const deleteContact = asyncHandler(async (req, res) => {
-  const contact = await Contact.findById(req.params.id);
-  if (!contact) {
-    res.status(statusCode.NOT_FOUND);
-    throw new Error("Contact not found");
+export const deleteContact = async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    if (contact.userId.toString() !== req.user.userId) {
+      return errorResponse(res, statusCode.FORBIDDEN, "Access denied");
+    }
+    await Contact.deleteOne({ _id: req.params.id });
+    return successResponse(res, statusCode.OK, "Contact deleted successfully", { id: req.params.id });
+  } catch (err) {
+    if (err.name === "CastError") {
+      return errorResponse(res, statusCode.NOT_FOUND, "Contact not found");
+    }
+    return errorResponse(res, statusCode.SERVER_ERROR, "Failed to delete contact", err.message);
   }
-
-  if (contact.user_id.toString() !== req.user_id) {
-    res.status(statusCode.FORBIDDEN);
-    throw new Error("Permission declined!!!");
-  }
-  await Contact.deleteOne({ _id: req.params.id });
-  res.status(statusCode.SUCESS).json(contact);
-});
+};

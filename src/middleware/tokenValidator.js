@@ -1,17 +1,14 @@
 import jwt from "jsonwebtoken";
 import { constants, statusCode } from "../constants.js";
 import { isTokenBlacklisted } from "../utils/tokenBlacklist.js";
+import { errorResponse } from "../utils/responseHelper.js";
 
 const tokenValidator = async (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
 
     if (!authHeader) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "Authorization header is missing",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Authorization header is missing");
     }
 
     const token = authHeader.startsWith(constants.BEARER_PREFIX)
@@ -19,47 +16,27 @@ const tokenValidator = async (req, res, next) => {
       : authHeader;
 
     if (!token) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "No authentication token provided",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "No authentication token provided");
     }
 
-    // Add token expiration check
     const verified = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    if (verified.exp && Date.now() >= verified.exp * 1000) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "Token has expired",
-      });
-    }
 
-    // Check if token is blacklisted
     const isBlacklisted = await isTokenBlacklisted(token);
     if (isBlacklisted) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "Token has been revoked",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Token has been revoked");
     }
 
     req.user = verified;
     next();
   } catch (err) {
-    // More specific error handling
+    if (err instanceof jwt.TokenExpiredError) {
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Token has expired");
+    }
     const message =
       err instanceof jwt.JsonWebTokenError
         ? "Invalid token format"
         : "Token verification failed";
-
-    res.status(statusCode.UNAUTHORIZED).json({
-      code: statusCode.UNAUTHORIZED,
-      success: false,
-      message,
-    });
+    return errorResponse(res, statusCode.UNAUTHORIZED, message);
   }
 };
 

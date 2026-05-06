@@ -1,16 +1,13 @@
 import jwt from "jsonwebtoken";
 import { constants, statusCode } from "../constants.js";
+import { errorResponse } from "../utils/responseHelper.js";
 
 const emailVerificationValidator = async (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
 
     if (!authHeader) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "Authorization header is missing",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Authorization header is missing");
     }
 
     const token = authHeader.startsWith(constants.BEARER_PREFIX)
@@ -18,36 +15,22 @@ const emailVerificationValidator = async (req, res, next) => {
       : authHeader;
 
     if (!token) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "No verification token provided",
-      });
+      return errorResponse(res, statusCode.UNAUTHORIZED, "No verification token provided");
     }
 
-    // Verify with email verification secret
     const verified = jwt.verify(token, process.env.VERIFY_TOKEN_SECRET);
-    if (verified.exp && Date.now() >= verified.exp * 1000) {
-      return res.status(statusCode.UNAUTHORIZED).json({
-        code: statusCode.UNAUTHORIZED,
-        success: false,
-        message: "Verification token has expired",
-      });
-    }
 
     req.user = verified;
     next();
   } catch (err) {
+    if (err instanceof jwt.TokenExpiredError) {
+      return errorResponse(res, statusCode.UNAUTHORIZED, "Verification token has expired");
+    }
     const message =
       err instanceof jwt.JsonWebTokenError
         ? "Invalid verification token format"
         : "Verification token validation failed";
-
-    res.status(statusCode.UNAUTHORIZED).json({
-      code: statusCode.UNAUTHORIZED,
-      success: false,
-      message,
-    });
+    return errorResponse(res, statusCode.UNAUTHORIZED, message);
   }
 };
 

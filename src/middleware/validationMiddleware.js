@@ -1,4 +1,5 @@
 import { statusCode } from "../constants.js";
+import { errorResponse } from "../utils/responseHelper.js";
 
 export const validateProfileUpdate = (req, res, next) => {
   const { email, username } = req.body;
@@ -13,10 +14,7 @@ export const validateProfileUpdate = (req, res, next) => {
   }
 
   if (errors.length > 0) {
-    return res.status(statusCode.BAD_REQUEST).json({
-      success: false,
-      errors: errors,
-    });
+    return errorResponse(res, statusCode.BAD_REQUEST, "Invalid request", errors.join(", "));
   }
 
   next();
@@ -37,10 +35,7 @@ export const validatePasswordUpdate = (req, res, next) => {
   }
 
   if (errors.length > 0) {
-    return res.status(statusCode.BAD_REQUEST).json({
-      success: false,
-      errors: errors,
-    });
+    return errorResponse(res, statusCode.BAD_REQUEST, "Invalid request", errors.join(", "));
   }
 
   next();
@@ -59,10 +54,7 @@ export const validatePreferencesUpdate = (req, res, next) => {
   }
 
   if (errors.length > 0) {
-    return res.status(statusCode.BAD_REQUEST).json({
-      success: false,
-      errors: errors,
-    });
+    return errorResponse(res, statusCode.BAD_REQUEST, "Invalid request", errors.join(", "));
   }
 
   next();
