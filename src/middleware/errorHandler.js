@@ -4,12 +4,16 @@ const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message || "Internal Server Error";
 
+  if (err.isOperational) {
+    statusCode = err.statusCode;
+  }
+
   if (err.name === "CastError" && err.kind === "ObjectId") {
     statusCode = 404;
     message = "Resource not found";
   }
 
-  if (err.name === "ValidationError") {
+  if (err.name === "ValidationError" && !err.isOperational) {
     statusCode = 400;
     message = Object.values(err.errors)
       .map((e) => e.message)
