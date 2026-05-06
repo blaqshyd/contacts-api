@@ -3,16 +3,8 @@ import jwt from "jsonwebtoken";
 import { constants, statusCode } from "../constants.js";
 import User from "../models/userModel.js";
 import { successResponse, errorResponse } from "../utils/responseHelper.js";
+import { transformUser } from "../utils/userTransformer.js";
 import { blacklistToken } from "../utils/tokenBlacklist.js";
-
-const userResponseTransform = (user) => ({
-  userId: user._id,
-  username: user.username,
-  email: user.email,
-  isVerified: user.isVerified,
-  createdAt: user.createdAt,
-  updatedAt: user.updatedAt,
-});
 
 export const registerUser = async (req, res) => {
   try {
@@ -43,7 +35,7 @@ export const registerUser = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    return successResponse(res, statusCode.CREATED, "Created User", userResponseTransform(user));
+    return successResponse(res, statusCode.CREATED, "Created User", transformUser(user));
   } catch (err) {
     return errorResponse(res, statusCode.SERVER_ERROR, "Failed to register user", err.message);
   }
@@ -80,7 +72,7 @@ export const loginUser = async (req, res) => {
     );
 
     return successResponse(res, statusCode.OK, "Login Successful", {
-      user: userResponseTransform(user),
+      user: transformUser(user),
       tokens: {
         access_token: accessToken,
         refresh_token: refreshToken,

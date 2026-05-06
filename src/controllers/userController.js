@@ -3,17 +3,7 @@ import { statusCode } from "../constants.js";
 import User from "../models/userModel.js";
 import Notification from "../models/notificationModel.js";
 import { successResponse, errorResponse } from "../utils/responseHelper.js";
-
-const userResponseTransform = (user) => ({
-  userId: user._id,
-  username: user.username,
-  email: user.email,
-  avatar: user.avatar,
-  isVerified: user.isVerified,
-  preferences: user.preferences,
-  createdAt: user.createdAt,
-  updatedAt: user.updatedAt,
-});
+import { transformUser, transformUserMinimal } from "../utils/userTransformer.js";
 
 export const currentUserInfo = async (req, res) => {
   try {
@@ -21,7 +11,7 @@ export const currentUserInfo = async (req, res) => {
     if (!user) {
       return errorResponse(res, statusCode.NOT_FOUND, "User not found");
     }
-    return successResponse(res, statusCode.OK, "User profile retrieved", userResponseTransform(user));
+    return successResponse(res, statusCode.OK, "User profile retrieved", transformUser(user, { includeSensitive: true }));
   } catch (err) {
     return errorResponse(res, statusCode.SERVER_ERROR, "Failed to retrieve profile", err.message);
   }
@@ -49,12 +39,7 @@ export const updateProfile = async (req, res) => {
     }
 
     const updatedUser = await user.save();
-    return successResponse(res, statusCode.OK, "User updated successfully", {
-      userId: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      updatedAt: updatedUser.updatedAt,
-    });
+    return successResponse(res, statusCode.OK, "User updated successfully", transformUserMinimal(updatedUser));
   } catch (err) {
     return errorResponse(res, statusCode.SERVER_ERROR, "Failed to update user", err.message);
   }
